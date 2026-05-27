@@ -184,10 +184,7 @@ body {
 </div>
 
 <script>
-// ============================================================
-// CONFIG — 部署后把下面这行改成你的 Worker URL
-// ============================================================
-const WORKER_URL = 'https://lizining-chat.lzn1732437116.workers.dev';
+// API Key 直接写在前端，不走中转（DeepSeek 国内直连）
 
 // ============================================================
 // COMPLETE PERSONA PROMPT
@@ -485,8 +482,10 @@ function clearHistory() {
 }
 
 // ============================================================
-// API CALL — 通过 Cloudflare Worker 中转
+// API CALL — 直接调 DeepSeek，国内直连
 // ============================================================
+const DEEPSEEK_KEY = 'sk-0a61eeed518248d3b5cd348096017ba5';
+
 async function callDeepSeek(userMessage) {
   const apiMessages = [{ role: 'system', content: SYSTEM_PROMPT }];
   const recentMessages = messages.slice(-20);
@@ -495,10 +494,19 @@ async function callDeepSeek(userMessage) {
   });
 
   try {
-    const response = await fetch(WORKER_URL, {
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: apiMessages })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + DEEPSEEK_KEY
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: apiMessages,
+        temperature: 0.85,
+        max_tokens: 800,
+        top_p: 0.9
+      })
     });
 
     if (!response.ok) {
